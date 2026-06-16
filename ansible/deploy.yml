@@ -1,0 +1,47 @@
+---
+- name: Deploy custom nginx on K3d
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Créer le déploiement
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: custom-nginx
+            namespace: default
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: custom-nginx
+            template:
+              metadata:
+                labels:
+                  app: custom-nginx
+              spec:
+                containers:
+                  - name: nginx
+                    image: custom-nginx:latest
+                    imagePullPolicy: Never
+                    ports:
+                      - containerPort: 80
+
+    - name: Exposer le service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: custom-nginx-svc
+            namespace: default
+          spec:
+            type: NodePort
+            selector:
+              app: custom-nginx
+            ports:
+              - port: 80
+                targetPort: 80
